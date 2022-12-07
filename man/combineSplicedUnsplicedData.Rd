@@ -1,6 +1,5 @@
 \name{combineSplicedUnsplicedData}
 \alias{combineSplicedUnsplicedData}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 UMI data}
 \description{
@@ -23,5 +22,4 @@ spliced <- matrix(rpois(100,10),ncol=10)
 unspliced <- matrix(rpois(100,10),ncol=10)
 
 combineSplicedUnsplicedData()
-
 }

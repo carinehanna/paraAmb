@@ -32,7 +32,15 @@ findKnees <- function(data2=spliced, first_knee){
   sorted_knees <- as.data.frame(sort(all_knee_df$knee_val, decreasing = TRUE))
 
   if (nrow(sorted_knees) == 3) {
-    if (sorted_knees[2,] - sorted_knees[3,] >= 30) {
+    if (sorted_knees[1,] - sorted_knees[2,] <= 50) {
+      knee1 = sorted_knees[1,]
+      sorted_knees[2,] <- metadata(first_knee)$inflection
+      knee2 = sorted_knees[2,]
+      knee3 = NA
+      warning('Second knee unsuccessfully found, first knee inflection point used instead.\nInflection value: ', knee2)
+
+    }
+    else if (sorted_knees[2,] - sorted_knees[3,] >= 30) {
       knee1 = sorted_knees[1,]
       knee2 = sorted_knees[2,]
       knee3 = sorted_knees[3,]
@@ -166,7 +174,9 @@ clusterGroups <- function(filter_data, sort_knee){
   print(fviz_cluster(km, data = filter_data, stand = FALSE, geom = "point", show.clust.cent=TRUE, xlab = "Total Spliced", ylab = "Total Unspliced"))
   cluster <- as.data.frame(filter_data)
   cluster$cluster <- km$cluster
-  return(cluster)
+
+  cluster_data <- list(km, cluster)
+  return(cluster_data)
 }
 
 kneeGroupsPlot <- function(ds_comb, knee_groups){
@@ -195,16 +205,19 @@ compareKneeClusterPlot <- function(filt_comb_data_2, sorted_knees, knee_plot) {
   cluster_plot <- fviz_cluster(km, data = filt_comb_data_2, stand = FALSE, geom = "point", pointsize = 1, show.clust.cent=TRUE, xlab = "Total Spliced", ylab = "Total Unspliced")
 
   gridExtra::grid.arrange(cluster_plot, knee_plot, ncol=2, nrow = 1)
-  return(km)
 }
 
 barcodeInFirstCluster <- function(kmeans_data, cluster_data){
   centroid <- kmeans_data$centers
+  if (is.null(centroid)) {
+    centroid <- kmeans_data[[1]]$centers
+  }
   sorted_clust <- centroid[order(centroid[,1],decreasing = TRUE),]
   sorted_clust.out <- as.data.frame(cbind(cluster = rownames(sorted_clust), sorted_clust))
   order_cluster <- as.data.frame(sorted_clust.out[,1])
   firstcluster <- as.numeric(order_cluster[1,])
-  first_clust <- cluster_data %>% filter(cluster == firstcluster)
+  cluster_data_out <- as.data.frame(cluster_data)
+  first_clust <- cluster_data_out %>% filter(cluster == firstcluster)
   bars_in_first_clust <- as.data.frame(rownames(first_clust))
   bars_first_clust <- bars_in_first_clust %>% rename(barcodes = `rownames(first_clust)`)
   return(bars_first_clust)
@@ -213,12 +226,15 @@ barcodeInFirstCluster <- function(kmeans_data, cluster_data){
 meanExpressionSecondClust <- function(kmeans_data1, cluster_data1){
 
   centroid <- kmeans_data1$centers
+  if (is.null(centroid)) {
+    centroid <- kmeans_data1[[1]]$centers
+  }
   sorted_clust <- centroid[order(centroid[,1],decreasing = TRUE),]
   sorted_clust.out <- as.data.frame(cbind(cluster = rownames(sorted_clust), sorted_clust))
   order_cluster <- as.data.frame(sorted_clust.out[,1])
   secondcluster <- as.numeric(order_cluster[2,])
-
-  bars_in_second_clust <- cluster_data1 %>% filter(cluster == secondcluster)
+  cluster_data_out <- as.data.frame(cluster_data1)
+  bars_in_second_clust <- cluster_data_out %>% filter(cluster == secondcluster)
   named_bars_second_clust <- as.data.frame(cbind(barcode = rownames(bars_in_second_clust), bars_in_second_clust))
 
   spliced_sec_clust <- spliced[,named_bars_second_clust$barcode]

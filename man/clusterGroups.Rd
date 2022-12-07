@@ -14,7 +14,10 @@ clusterGroups(filter_data, sort_knee)
 \details{
 Uses \code{kmeans} and \code{fviz_cluster} to cluster the data sets. Clusters seperate barcodes containing ambient RNA from barcdoes containing actual cells}
 \value{
-Returns filter_data dataframe with added column "cluster", containing the cluster number the barcode is apart of}
+Returns a list:
+In the first position the list contains a dataframe containing all barcodes, their total spliced and unspliced values with an additional column containing their cluster group.
+
+In the second position the list contains a \code{kmeans} dataframe for all barcode values.}
 \examples{
 # Mocking up some data:
 raw_spliced <- DropletUtils:::simCounts()
@@ -39,5 +42,10 @@ kmeans_data <- kmeans(comb_data, 3)
 knees <- as.data.frame(quantile(comb_data$colSums.filt_spliced., probs = c(0.75, 0.5, 0.25)))
 colnames(knees) <- c('knee_vals')
 
-clusterGroups(comb_data, knees)
+cg< - clusterGroups(comb_data, knees)
+
+% For dataframe containing cluster groups
+cg[1]
+% For dataframe containing kmeans data
+cg[2]
 }
