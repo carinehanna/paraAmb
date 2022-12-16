@@ -42,10 +42,10 @@ kmeans_data <- kmeans(comb_data, 3)
 knees <- as.data.frame(quantile(comb_data$colSums.filt_spliced., probs = c(0.75, 0.5, 0.25)))
 colnames(knees) <- c('knee_vals')
 
-cg< - clusterGroups(comb_data, knees)
+cg <- clusterGroups(comb_data, knees)
 
-% For dataframe containing cluster groups
+% For list containing cluster groups
 cg[1]
-% For dataframe containing kmeans data
+% For list containing kmeans data
 cg[2]
 }

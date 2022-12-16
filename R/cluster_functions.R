@@ -20,7 +20,7 @@ findKnees <- function(data2=spliced, first_knee){
     all_knees[[length(all_knees) + 1]] <- knee
     br <- DropletUtils::barcodeRanks(data2, lower=0, exclude.from = knee)
     knee <- metadata(br)$knee
-    if (knee <10) {
+    if (knee < 10) {
       all_knees[[length(all_knees) + 1]] <- knee
       break
     }
@@ -34,11 +34,10 @@ findKnees <- function(data2=spliced, first_knee){
   if (nrow(sorted_knees) == 3) {
     if (sorted_knees[1,] - sorted_knees[2,] <= 50) {
       knee1 = sorted_knees[1,]
-      sorted_knees[2,] <- metadata(first_knee)$inflection
+      sorted_knees[2,] <- metadata(first_knee)$inflection - (metadata(first_knee)$inflection * 0.5)
       knee2 = sorted_knees[2,]
       knee3 = NA
       warning('Second knee unsuccessfully found, first knee inflection point used instead.\nInflection value: ', knee2)
-
     }
     else if (sorted_knees[2,] - sorted_knees[3,] >= 30) {
       knee1 = sorted_knees[1,]
@@ -121,17 +120,17 @@ filterKnees <- function(data3=spliced, knee_data){
   is.cell <- e.out$FDR <= 0.001
 
   barcodes <- as.data.frame(colnames(data3))
-
+  colnames(barcodes) <- c('barcodes')
   is.higherknee1 <- (br.out$total > knee_data[1,])
 
   if (!is.na(knee_data[3,])) {
     is.betweenknee1andknee2 <- ((br.out$total > knee_data[2,]) & (br.out$total <= knee_data[1,]))
     is.betweenknee2andknee3 <- ((br.out$total >= knee_data[3,]) & (br.out$total <= knee_data[2,]))
-    knee_groups_df <- cbind(barcodes, is.betweenknee1andknee2,is.betweenknee2andknee3,is.higherknee1)
+    knee_groups_df <- cbind(barcodes, is.betweenknee1andknee2, is.betweenknee2andknee3, is.higherknee1)
   }
   else if (!is.na(knee_data[2,])) {
     is.betweenknee1andknee2 <- ((br.out$total > knee_data[2,]) & (br.out$total <= knee_data[1,]))
-    knee_groups_df <- cbind(barcodes, is.betweenknee1andknee2,is.higherknee1)
+    knee_groups_df <- cbind(barcodes, is.betweenknee1andknee2, is.higherknee1)
   }
    else{
     knee_groups_df <- cbind(barcodes,is.higherknee1)
@@ -157,25 +156,29 @@ combineSplicedUnsplicedData <- function(spliced_data=spliced, unspliced_data=uns
 }
 
 filterUMIData <- function(ds_comb, filter_num = 1){
-  filt_comb_data_1 <- filter(ds_comb, ds_comb[,1] > filter_num & ds_comb[,2] > filter_num)
+  filt_comb_data_1 <- dplyr::filter(ds_comb, ds_comb[,1] > filter_num & ds_comb[,2] > filter_num)
   plot(filt_comb_data_1[,1], filt_comb_data_1[,2], xlab = "Total Spliced", ylab = 'Total Unspliced')
   filt_comb_data_1[is.na(filt_comb_data_1)] <- 0
   return(filt_comb_data_1)
 }
 
-clusterGroups <- function(filter_data, sort_knee){
-  if (!is.na(sort_knee[3,])) {
-    knees = 3
-  }else{
-    knees = 2
+clusterGroups <- function(filter_data, sort_knee, clusters = NULL ){
+
+  if (is.null(clusters)) {
+    if (!is.na(sort_knee[3,])) {
+      clusters = 3
+  }else{clusters = 2}
+  }
+  else{
+    km <- kmeans(filter_data, centers=clusters, nstart=45)
   }
 
-  km <- kmeans(filter_data, centers=knees, nstart=45)
-  print(fviz_cluster(km, data = filter_data, stand = FALSE, geom = "point", show.clust.cent=TRUE, xlab = "Total Spliced", ylab = "Total Unspliced"))
-  cluster <- as.data.frame(filter_data)
-  cluster$cluster <- km$cluster
+  km <- kmeans(filter_data, centers=clusters, nstart=45)
+  print(factoextra::fviz_cluster(km, data = filter_data, stand = FALSE, geom = "point", show.clust.cent=TRUE, xlab = "Total Spliced", ylab = "Total Unspliced"))
+  filt_data <- as.data.frame(filter_data)
+  filt_data$cluster <- km$cluster
 
-  cluster_data <- list(km, cluster)
+  cluster_data <- list(km, filt_data)
   return(cluster_data)
 }
 
@@ -186,23 +189,18 @@ kneeGroupsPlot <- function(ds_comb, knee_groups){
   big_data[big_data$is.betweenknee2andknee3, "col"] <- "red"
   big_data[big_data$is.higherknee1, "col"] <- "orange"
 
-  knee_plot <- ggplot2::ggplot(big_data, aes(x = log_total_spliced, y = log_total_unspliced, color = col)) +
-    geom_point() +
-    ggtitle("Knee group plot") + xlab("Total Spliced") + ylab("Total Unspliced") +
-    scale_color_identity(name = "Legend",
+  knee_plot <- ggplot2::ggplot(big_data, ggplot2::aes(x = log_total_spliced, y = log_total_unspliced, color = col)) +
+    ggplot2::geom_point() +
+    ggplot2::ggtitle("Knee group plot") + ggplot2::xlab("Total Spliced") + ggplot2::ylab("Total Unspliced") +
+    ggplot2::scale_color_identity(name = "Legend",
                          labels = c(orange = "Above Knee 1", green = "Between Knee 1\nand Knee 2", red = "Between Knee 2\nand Knee 3",
                                     grey = "Other"), guide = "legend")
   print(knee_plot)
 }
 
-compareKneeClusterPlot <- function(filt_comb_data_2, sorted_knees, knee_plot) {
-  if (!is.na(sorted_knees[3,])) {
-    knees = 3
-  }else{
-    knees = 2
-  }
-  km <- kmeans(filt_comb_data_2, centers=knees, nstart=45)
-  cluster_plot <- fviz_cluster(km, data = filt_comb_data_2, stand = FALSE, geom = "point", pointsize = 1, show.clust.cent=TRUE, xlab = "Total Spliced", ylab = "Total Unspliced")
+compareKneeClusterPlot <- function(filt_comb_data_2, cluster, knee_plot) {
+  km <- cluster[[1]]
+  cluster_plot <- factoextra::fviz_cluster(km, data = filt_comb_data_2, stand = FALSE, geom = "point", pointsize = 1, show.clust.cent=TRUE, xlab = "Total Spliced", ylab = "Total Unspliced")
 
   gridExtra::grid.arrange(cluster_plot, knee_plot, ncol=2, nrow = 1)
 }
@@ -217,10 +215,10 @@ barcodeInFirstCluster <- function(kmeans_data, cluster_data){
   order_cluster <- as.data.frame(sorted_clust.out[,1])
   firstcluster <- as.numeric(order_cluster[1,])
   cluster_data_out <- as.data.frame(cluster_data)
-  first_clust <- cluster_data_out %>% filter(cluster == firstcluster)
+  first_clust <- dplyr::filter(cluster_data_out, cluster == firstcluster)
   bars_in_first_clust <- as.data.frame(rownames(first_clust))
-  bars_first_clust <- bars_in_first_clust %>% rename(barcodes = `rownames(first_clust)`)
-  return(bars_first_clust)
+  colnames(bars_in_first_clust) <- c('barcodes')
+  return(bars_in_first_clust)
 }
 
 meanExpressionSecondClust <- function(kmeans_data1, cluster_data1){
@@ -234,7 +232,7 @@ meanExpressionSecondClust <- function(kmeans_data1, cluster_data1){
   order_cluster <- as.data.frame(sorted_clust.out[,1])
   secondcluster <- as.numeric(order_cluster[2,])
   cluster_data_out <- as.data.frame(cluster_data1)
-  bars_in_second_clust <- cluster_data_out %>% filter(cluster == secondcluster)
+  bars_in_second_clust <-  dplyr::filter(cluster_data_out, cluster == secondcluster)
   named_bars_second_clust <- as.data.frame(cbind(barcode = rownames(bars_in_second_clust), bars_in_second_clust))
 
   spliced_sec_clust <- spliced[,named_bars_second_clust$barcode]
