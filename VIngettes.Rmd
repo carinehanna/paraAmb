@@ -41,16 +41,17 @@ rownames(unspliced) <- genes_SU[,1]
 ```
 Running ParaAmb
 ```{}
-fk <- firstKneeValue(spliced)
+fk <- firstKneeValue()
 knees <- findKnees(spliced, fk)
 plotKnees(fk, knees)
 knee_groups <- filterKnees(spliced, knees)
 ds_comb <- combineSplicedUnsplicedData(spliced, unspliced)
-filt_comb_data <- filterUMIData(ds_comb, 1)
+filt_comb_data <- filterUMIData(ds_comb,1)
 cluster <- clusterGroups(filt_comb_data, knees)
-kp <- kneeGroupsPlot(ds_comb, knee_groups)
-compareKneeClusterPlot(filt_comb_data, knees, kp)
-barcodeInFirstCluster(cluster[1], cluster[2])
-meanExpressionSecondClust(cluster[1], cluster[2])
+k <- kneeGroupsPlot(ds_comb, knee_groups)
+km <- compareKneeClusterPlot(filt_comb_data, cluster, k)
+b <- barcodeInFirstCluster(cluster[1], cluster[2])
+tr2 <- meanExpressionSecondClust(cluster[1], cluster[2])
+
 
 ```
