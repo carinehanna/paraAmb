@@ -3,7 +3,7 @@ firstKneeValue <- function(data=spliced, lower_num=2000){
   plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total")
   o <- order(br.out$rank)
   first_knee <- DropletUtils::barcodeRanks(data, lower=lower_num, exclude.from = 50)
-  knee <- metadata(first_knee)$knee
+  knee <- S4Vectors::metadata(first_knee)$knee
   plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total")
   o <- order(br.out$rank)
   abline(h=knee, col="dodgerblue", lty=2)
@@ -14,12 +14,12 @@ firstKneeValue <- function(data=spliced, lower_num=2000){
 findKnees <- function(data2=spliced, first_knee){
 
   all_knees <- NULL
-  knee <- metadata(first_knee)$knee
+  knee <- S4Vectors::metadata(first_knee)$knee
   for (i in 1:3)
   {
     all_knees[[length(all_knees) + 1]] <- knee
     br <- DropletUtils::barcodeRanks(data2, lower=0, exclude.from = knee)
-    knee <- metadata(br)$knee
+    knee <- S4Vectors::metadata(br)$knee
     if (knee < 10) {
       all_knees[[length(all_knees) + 1]] <- knee
       break
@@ -34,7 +34,7 @@ findKnees <- function(data2=spliced, first_knee){
   if (nrow(sorted_knees) == 3) {
     if (sorted_knees[1,] - sorted_knees[2,] <= 50) {
       knee1 = sorted_knees[1,]
-      sorted_knees[2,] <- metadata(first_knee)$inflection - (metadata(first_knee)$inflection * 0.5)
+      sorted_knees[2,] <- S4Vectors::metadata(first_knee)$inflection - (S4Vectors::metadata(first_knee)$inflection * 0.5)
       knee2 = sorted_knees[2,]
       knee3 = NA
       warning('Second knee unsuccessfully found, first knee inflection point used instead.\nInflection value: ', knee2)
@@ -202,7 +202,7 @@ compareKneeClusterPlot <- function(filt_comb_data_2, cluster, knee_plot) {
   km <- cluster[[1]]
   cluster_plot <- factoextra::fviz_cluster(km, data = filt_comb_data_2, stand = FALSE, geom = "point", pointsize = 1, show.clust.cent=TRUE, xlab = "Total Spliced", ylab = "Total Unspliced")
 
-  gridExtra::grid.arrange(cluster_plot, knee_plot, ncol=2, nrow = 1)
+  print(gridExtra::grid.arrange(cluster_plot, knee_plot, ncol=2, nrow = 1))
 }
 
 barcodeInFirstCluster <- function(kmeans_data, cluster_data){
