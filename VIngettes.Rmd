@@ -39,7 +39,7 @@ rownames(spliced) <- genes_SU[,1]
 colnames(unspliced) <- new_barcodes[,2]
 rownames(unspliced) <- genes_SU[,1]
 ```
-Running ParaAmb
+Running ParaAmb fully 
 ```{}
 fk <- firstKneeValue()
 knees <- findKnees(spliced, fk)
@@ -54,4 +54,15 @@ b <- barcodeInFirstCluster(cluster[1], cluster[2])
 tr2 <- meanExpressionSecondClust(cluster[1], cluster[2])
 
 
+```
+Running ParaAmb to only find 
+```{}
+fk <- firstKneeValue(all.sim.spliced, 50)
+knees <- findKnees(all.sim.spliced, fk)
+plotKnees(fk, knees)
+ds_comb <- combineSplicedUnsplicedData(all.sim.spliced, all.sim.unspliced)
+filt_comb_data <- filterUMIData(ds_comb, 0)
+cluster <- clusterGroups(filt_comb_data, knees)
+barcodeInFirstCluster(cluster[1], cluster[2])
+meanExpressionSecondClust(cluster[1], cluster[2])
 ```

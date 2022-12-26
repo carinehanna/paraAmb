@@ -34,7 +34,7 @@ findKnees <- function(data2=spliced, first_knee){
   if (nrow(sorted_knees) == 3) {
     if (sorted_knees[1,] - sorted_knees[2,] <= 50) {
       knee1 = sorted_knees[1,]
-      sorted_knees[2,] <- S4Vectors::metadata(first_knee)$inflection - (S4Vectors::metadata(first_knee)$inflection * 0.5)
+      sorted_knees[2,] <- (S4Vectors::metadata(first_knee)$inflection * 0.5)
       knee2 = sorted_knees[2,]
       knee3 = NA
       warning('Second knee unsuccessfully found, first knee inflection point used instead.\nInflection value: ', knee2)
