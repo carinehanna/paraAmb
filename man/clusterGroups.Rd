@@ -5,11 +5,13 @@
 Using \code{kmeans} to find clusters in data.
 }
 \usage{
-clusterGroups(filter_data, sort_knee)
+clusterGroups(filter_data, sort_knee, clusters = NULL)
 }
 \arguments{
   \item{filter_data}{dataframe containing total spliced, total unspliced and barcode. Can be created from \code{filterSplicedData} or \code{combineSplicedUnsplicedData}}
   \item{sort_knee}{dataframe containg knee UMI values. Can be created from \code{findKnees}}
+}
+\item{clusters}{A number. Defines the number of clusters \code{kmeans} will find}
 }
 \details{
 Uses \code{kmeans} and \code{fviz_cluster} to cluster the data sets. Clusters seperate barcodes containing ambient RNA from barcdoes containing actual cells}
